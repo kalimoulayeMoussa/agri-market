@@ -1,0 +1,27 @@
+# Node / Expo
+**/node_modules/
+**/.expo/
+**/web-build/
+**/dist/
+
+# Java / Maven
+**/target/
+**/.mvn/
+**/*.class
+**/bin/
+
+# IDE / Editeurs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.claude/
+
+# Systèmes d'exploitation
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
