@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image, TextInput, TouchableOpacity, A
 import { useAuth } from '../../context/AuthContext';
 import { API_URL, PRODUCT_CATEGORIES, PRODUCT_CATALOG } from '../../constants/Config';
 import { useCart } from '../../context/CartContext';
-import { Search, MapPin, Navigation, Tag, Sprout } from 'lucide-react-native';
+import { Search, MapPin, Navigation, Tag, Sprout, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 interface Product {
@@ -34,6 +34,8 @@ export default function MarketplaceHome() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubProduct, setSelectedSubProduct] = useState<string | null>(null);
+  const [isCatalogueOpen, setIsCatalogueOpen] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [onlyNearby, setOnlyNearby] = useState(false);
   const [maxDistance, setMaxDistance] = useState(30); // 30 km par défaut
 
@@ -173,57 +175,101 @@ export default function MarketplaceHome() {
         </View>
       </View>
 
-      {/* Catégories (Filtre horizontal) */}
-      <View style={styles.categoriesWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
-          <TouchableOpacity
-            style={[styles.categoryChip, selectedCategory === null && styles.categoryChipActive]}
-            onPress={() => handleSelectCategory(null)}
-          >
-            <Text style={[styles.categoryText, selectedCategory === null && styles.categoryTextActive]}>
-              Tous
+      {/* Catalogue Accordéon Repliable */}
+      <View style={styles.catalogueContainer}>
+        <TouchableOpacity 
+          style={styles.catalogueHeader}
+          onPress={() => setIsCatalogueOpen(!isCatalogueOpen)}
+        >
+          <View style={styles.catalogueHeaderLeft}>
+            <Tag size={16} color="#2D6A4F" style={{ marginRight: 8 }} />
+            <Text style={styles.catalogueHeaderTitle}>
+              {selectedCategory 
+                ? `${selectedCategory}${selectedSubProduct ? ` > ${selectedSubProduct}` : ''}`
+                : "Parcourir le catalogue"}
             </Text>
-          </TouchableOpacity>
-          {PRODUCT_CATEGORIES.map(cat => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipActive]}
-              onPress={() => handleSelectCategory(cat)}
-            >
-              <Text style={[styles.categoryText, selectedCategory === cat && styles.categoryTextActive]}>
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+          </View>
+          {isCatalogueOpen ? <ChevronUp size={18} color="#2D6A4F" /> : <ChevronDown size={18} color="#2D6A4F" />}
+        </TouchableOpacity>
 
-      {/* Sous-produits cliquables de deuxième niveau */}
-      {selectedCategory && PRODUCT_CATALOG[selectedCategory] && (
-        <View style={styles.subProductsWrapper}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subProductsScroll}>
-            <TouchableOpacity
-              style={[styles.subProductChip, selectedSubProduct === null && styles.subProductChipActive]}
-              onPress={() => setSelectedSubProduct(null)}
+        {isCatalogueOpen && (
+          <ScrollView style={styles.catalogueBody} nestedScrollEnabled={true}>
+            {/* Option Réinitialiser Filtre */}
+            <TouchableOpacity 
+              style={[styles.categoryRow, selectedCategory === null && styles.categoryRowSelected]}
+              onPress={() => {
+                handleSelectCategory(null);
+                setIsCatalogueOpen(false);
+              }}
             >
-              <Text style={[styles.subProductText, selectedSubProduct === null && styles.subProductTextActive]}>
-                Tout {selectedCategory}
+              <Text style={[styles.categoryRowText, selectedCategory === null && styles.categoryRowTextSelected]}>
+                ✨ Tous les produits
               </Text>
             </TouchableOpacity>
-            {PRODUCT_CATALOG[selectedCategory].map(sub => (
-              <TouchableOpacity
-                key={sub}
-                style={[styles.subProductChip, selectedSubProduct === sub && styles.subProductChipActive]}
-                onPress={() => setSelectedSubProduct(sub)}
-              >
-                <Text style={[styles.subProductText, selectedSubProduct === sub && styles.subProductTextActive]}>
-                  {sub}
-                </Text>
-              </TouchableOpacity>
-            ))}
+
+            {PRODUCT_CATEGORIES.map((cat) => {
+              const isCatExpanded = expandedCategory === cat;
+              return (
+                <View key={cat} style={styles.categoryBlock}>
+                  <TouchableOpacity 
+                    style={[styles.categoryRow, selectedCategory === cat && styles.categoryRowSelected]}
+                    onPress={() => setExpandedCategory(isCatExpanded ? null : cat)}
+                  >
+                    <Text style={[styles.categoryRowText, selectedCategory === cat && styles.categoryRowTextSelected]}>
+                      {isCatExpanded ? '▾' : '▸'} {cat}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {isCatExpanded && (
+                    <View style={styles.subCatalogChipsContainer}>
+                      <TouchableOpacity
+                        style={[
+                          styles.subCatalogChip, 
+                          selectedCategory === cat && selectedSubProduct === null && styles.subCatalogChipActive
+                        ]}
+                        onPress={() => {
+                          setSelectedCategory(cat);
+                          setSelectedSubProduct(null);
+                          setIsCatalogueOpen(false);
+                        }}
+                      >
+                        <Text style={[
+                          styles.subCatalogChipText,
+                          selectedCategory === cat && selectedSubProduct === null && styles.subCatalogChipTextActive
+                        ]}>
+                          Tout {cat}
+                        </Text>
+                      </TouchableOpacity>
+                      
+                      {PRODUCT_CATALOG[cat]?.map((sub) => (
+                        <TouchableOpacity
+                          key={sub}
+                          style={[
+                            styles.subCatalogChip, 
+                            selectedCategory === cat && selectedSubProduct === sub && styles.subCatalogChipActive
+                          ]}
+                          onPress={() => {
+                            setSelectedCategory(cat);
+                            setSelectedSubProduct(sub);
+                            setIsCatalogueOpen(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.subCatalogChipText,
+                            selectedCategory === cat && selectedSubProduct === sub && styles.subCatalogChipTextActive
+                          ]}>
+                            {sub}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </ScrollView>
-        </View>
-      )}
+        )}
+      </View>
 
       {loading ? (
         <View style={styles.center}>
@@ -477,34 +523,89 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
   },
-  subProductsWrapper: {
-    backgroundColor: '#F8FAFC',
+  catalogueContainer: {
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
-    paddingVertical: 10,
+    shadowColor: '#2D6A4F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  subProductsScroll: {
+  catalogueHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
     paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
   },
-  subProductChip: {
+  catalogueHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  catalogueHeaderTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1E293B',
+  },
+  catalogueBody: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    maxHeight: 350,
+  },
+  categoryBlock: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#F1F5F9',
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  categoryRowSelected: {
+    backgroundColor: '#ECFDF5',
+  },
+  categoryRowText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  categoryRowTextSelected: {
+    color: '#047857',
+    fontWeight: 'bold',
+  },
+  subCatalogChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    backgroundColor: '#F8FAFC',
+  },
+  subCatalogChip: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#CBD5E1',
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    marginRight: 8,
+    marginRight: 6,
+    marginBottom: 6,
   },
-  subProductChipActive: {
+  subCatalogChipActive: {
     backgroundColor: '#0284C7',
     borderColor: '#0284C7',
   },
-  subProductText: {
-    fontSize: 12,
+  subCatalogChipText: {
+    fontSize: 11,
     color: '#475569',
     fontWeight: '500',
   },
-  subProductTextActive: {
+  subCatalogChipTextActive: {
     color: '#FFFFFF',
     fontWeight: 'bold',
   },

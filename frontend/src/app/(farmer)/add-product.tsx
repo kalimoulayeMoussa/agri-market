@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import { useAuth } from '../../context/AuthContext';
 import { API_URL, PRODUCT_CATEGORIES, PRODUCT_CATALOG } from '../../constants/Config';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Save, AlertCircle, Upload } from 'lucide-react-native';
+import { Save, AlertCircle, Upload, ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 const CATEGORY_IMAGES: { [key: string]: string } = {
@@ -36,12 +36,21 @@ export default function AddOrEditProduct() {
   const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
   const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showSubCatalog, setShowSubCatalog] = useState(true);
+
+  useEffect(() => {
+    setShowSubCatalog(true); // Ouvrir automatiquement quand on change de catégorie
+  }, [category]);
 
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert("Permission requise", "Désolé, nous avons besoin des permissions d'accès à la galerie pour ajouter une photo !");
+        if (Platform.OS === 'web') {
+          alert("Permission requise : Désolé, nous avons besoin des permissions d'accès à la galerie pour ajouter une photo !");
+        } else {
+          Alert.alert("Permission requise", "Désolé, nous avons besoin des permissions d'accès à la galerie pour ajouter une photo !");
+        }
         return;
       }
 
@@ -94,12 +103,20 @@ export default function AddOrEditProduct() {
     }
 
     if (isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
-      Alert.alert("Prix invalide", "Le prix doit être un nombre positif.");
+      if (Platform.OS === 'web') {
+        alert("Prix invalide : Le prix doit être un nombre positif.");
+      } else {
+        Alert.alert("Prix invalide", "Le prix doit être un nombre positif.");
+      }
       return;
     }
 
     if (isNaN(parseInt(quantity)) || parseInt(quantity) < 0) {
-      Alert.alert("Stock invalide", "Le stock doit être un nombre positif ou nul.");
+      if (Platform.OS === 'web') {
+        alert("Stock invalide : Le stock doit être un nombre positif ou nul.");
+      } else {
+        Alert.alert("Stock invalide", "Le stock doit être un nombre positif ou nul.");
+      }
       return;
     }
 
@@ -133,44 +150,67 @@ export default function AddOrEditProduct() {
 
       if (response.ok) {
         if (isEditing) {
-          Alert.alert(
-            "Succès",
-            "Votre annonce a été mise à jour !",
-            [{ text: "OK", onPress: () => router.replace('/(farmer)') }]
-          );
+          if (Platform.OS === 'web') {
+            alert("Votre annonce a été mise à jour !");
+            router.replace('/(farmer)');
+          } else {
+            Alert.alert(
+              "Succès",
+              "Votre annonce a été mise à jour !",
+              [{ text: "OK", onPress: () => router.replace('/(farmer)') }]
+            );
+          }
         } else {
-          Alert.alert(
-            "Produit publié !",
-            `Le produit "${name}" a été ajouté avec succès dans la catégorie "${category}".`,
-            [
-              {
-                text: "Ajouter un autre",
-                onPress: () => {
-                  // Vider le formulaire pour en ajouter un autre immédiatement
-                  setName('');
-                  setDescription('');
-                  setPrice('');
-                  setUnit('kg');
-                  setQuantity('');
-                  setCategory(PRODUCT_CATEGORIES[0]);
-                  setImageUrl('');
+          if (Platform.OS === 'web') {
+            const addAnother = window.confirm(`Le produit "${name}" a été ajouté avec succès !\n\nSouhaitez-vous ajouter un autre produit ?\n(Cliquez sur Annuler pour voir vos produits)`);
+            if (addAnother) {
+              setName('');
+              setDescription('');
+              setPrice('');
+              setUnit('kg');
+              setQuantity('');
+              setCategory(PRODUCT_CATEGORIES[0]);
+              setImageUrl('');
+            } else {
+              router.replace('/(farmer)');
+            }
+          } else {
+            Alert.alert(
+              "Produit publié !",
+              `Le produit "${name}" a été ajouté avec succès dans la catégorie "${category}".`,
+              [
+                {
+                  text: "Ajouter un autre",
+                  onPress: () => {
+                    setName('');
+                    setDescription('');
+                    setPrice('');
+                    setUnit('kg');
+                    setQuantity('');
+                    setCategory(PRODUCT_CATEGORIES[0]);
+                    setImageUrl('');
+                  }
+                },
+                {
+                  text: "Voir mes produits",
+                  onPress: () => {
+                    router.replace('/(farmer)');
+                  }
                 }
-              },
-              {
-                text: "Voir mes produits",
-                onPress: () => {
-                  router.replace('/(farmer)');
-                }
-              }
-            ]
-          );
+              ]
+            );
+          }
         }
       } else {
         const errorMsg = await response.text();
         throw new Error(errorMsg || "Impossible de sauvegarder le produit.");
       }
     } catch (err: any) {
-      Alert.alert("Erreur", err.message || "Une erreur s'est produite lors de la publication.");
+      if (Platform.OS === 'web') {
+        alert("Erreur : " + (err.message || "Une erreur s'est produite lors de la publication."));
+      } else {
+        Alert.alert("Erreur", err.message || "Une erreur s'est produite lors de la publication.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -210,20 +250,35 @@ export default function AddOrEditProduct() {
         </View>
 
         {/* Choix rapide de sous-produits cliquables */}
-        <Text style={styles.subLabel}>Sélectionnez un produit ou saisissez le nom ci-dessus :</Text>
-        <View style={styles.subItemsContainer}>
-          {PRODUCT_CATALOG[category]?.map((subItem) => (
-            <TouchableOpacity
-              key={subItem}
-              style={[styles.subItemChip, name === subItem && styles.subItemChipActive]}
-              onPress={() => setName(subItem)}
-            >
-              <Text style={[styles.subItemChipText, name === subItem && styles.subItemChipTextActive]}>
-                {subItem}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <TouchableOpacity 
+          style={styles.subCatalogHeader}
+          onPress={() => setShowSubCatalog(!showSubCatalog)}
+        >
+          <Text style={styles.subLabelTitle}>
+            Type de produit : {name || 'Sélectionner...'}
+          </Text>
+          {showSubCatalog ? (
+            <ChevronUp size={16} color="#475569" />
+          ) : (
+            <ChevronDown size={16} color="#475569" />
+          )}
+        </TouchableOpacity>
+
+        {showSubCatalog && (
+          <View style={styles.subItemsContainer}>
+            {PRODUCT_CATALOG[category]?.map((subItem) => (
+              <TouchableOpacity
+                key={subItem}
+                style={[styles.subItemChip, name === subItem && styles.subItemChipActive]}
+                onPress={() => setName(subItem)}
+              >
+                <Text style={[styles.subItemChipText, name === subItem && styles.subItemChipTextActive]}>
+                  {subItem}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         <View style={styles.row}>
           <View style={[styles.column, { marginRight: 12 }]}>
@@ -523,5 +578,22 @@ const styles = StyleSheet.create({
   subItemChipTextActive: {
     color: '#0284C7',
     fontWeight: 'bold',
+  },
+  subCatalogHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  subLabelTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
   },
 });

@@ -60,7 +60,11 @@ export default function ProductDetails() {
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Erreur", "Impossible de charger les détails du produit.");
+      if (Platform.OS === 'web') {
+        alert("Erreur : Impossible de charger les détails du produit.");
+      } else {
+        Alert.alert("Erreur", "Impossible de charger les détails du produit.");
+      }
       router.back();
     } finally {
       setLoading(false);
@@ -75,18 +79,27 @@ export default function ProductDetails() {
     if (!product) return;
     
     addToCart(product, quantity);
-    Alert.alert(
-      "Panier mis à jour",
-      `${quantity} ${product.unit}(s) de ${product.name} ajouté(s) au panier !`,
-      [
-        { 
-          text: "Continuer mes achats", 
-          style: "cancel",
-          onPress: () => router.back()
-        },
-        { text: "Voir le panier", onPress: () => router.push('/(consumer)/cart') }
-      ]
-    );
+    if (Platform.OS === 'web') {
+      const viewCart = window.confirm(`${quantity} ${product.unit}(s) de ${product.name} ajouté(s) au panier !\n\nSouhaitez-vous voir votre panier ?\n(Cliquez sur Annuler pour continuer vos achats)`);
+      if (viewCart) {
+        router.push('/(consumer)/cart');
+      } else {
+        router.back();
+      }
+    } else {
+      Alert.alert(
+        "Panier mis à jour",
+        `${quantity} ${product.unit}(s) de ${product.name} ajouté(s) au panier !`,
+        [
+          { 
+            text: "Continuer mes achats", 
+            style: "cancel",
+            onPress: () => router.back()
+          },
+          { text: "Voir le panier", onPress: () => router.push('/(consumer)/cart') }
+        ]
+      );
+    }
   };
 
   // Calculer la distance locale (Formule Haversine)
@@ -112,7 +125,11 @@ export default function ProductDetails() {
     if (quantity < product.quantity) {
       setQuantity(prev => prev + 1);
     } else {
-      Alert.alert("Limite de stock", "Vous ne pouvez pas commander plus que le stock disponible.");
+      if (Platform.OS === 'web') {
+        alert("Limite de stock : Vous ne pouvez pas commander plus que le stock disponible.");
+      } else {
+        Alert.alert("Limite de stock", "Vous ne pouvez pas commander plus que le stock disponible.");
+      }
     }
   };
 

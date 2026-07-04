@@ -12,7 +12,11 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Champs requis", "Veuillez remplir tous les champs.");
+      if (Platform.OS === 'web') {
+        alert("Champs requis : Veuillez remplir tous les champs.");
+      } else {
+        Alert.alert("Champs requis", "Veuillez remplir tous les champs.");
+      }
       return;
     }
 
@@ -20,10 +24,14 @@ export default function LoginScreen() {
       await login(email, password);
       router.replace('/');
     } catch (e: any) {
-      Alert.alert(
-        "Connexion échouée", 
-        "Adresse e-mail (Gmail) ou mot de passe incorrect. Veuillez vérifier vos identifiants ou créer un compte si vous n'en avez pas."
-      );
+      if (Platform.OS === 'web') {
+        alert("Connexion échouée : Adresse e-mail (Gmail) ou mot de passe incorrect. Veuillez vérifier vos identifiants ou créer un compte si vous n'en avez pas.");
+      } else {
+        Alert.alert(
+          "Connexion échouée", 
+          "Adresse e-mail (Gmail) ou mot de passe incorrect. Veuillez vérifier vos identifiants ou créer un compte si vous n'en avez pas."
+        );
+      }
     }
   };
 

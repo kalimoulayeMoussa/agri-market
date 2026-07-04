@@ -18,12 +18,20 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!email || !password || !fullName || !phone || !address) {
-      Alert.alert("Champs requis", "Veuillez remplir tous les champs.");
+      if (Platform.OS === 'web') {
+        alert("Champs requis : Veuillez remplir tous les champs.");
+      } else {
+        Alert.alert("Champs requis", "Veuillez remplir tous les champs.");
+      }
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert("Erreur de mot de passe", "Le mot de passe doit faire au moins 6 caractères.");
+      if (Platform.OS === 'web') {
+        alert("Erreur de mot de passe : Le mot de passe doit faire au moins 6 caractères.");
+      } else {
+        Alert.alert("Erreur de mot de passe", "Le mot de passe doit faire au moins 6 caractères.");
+      }
       return;
     }
 

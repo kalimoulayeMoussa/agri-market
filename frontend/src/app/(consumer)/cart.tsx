@@ -30,20 +30,36 @@ export default function ConsumerCart() {
   const processPayment = async () => {
     if (paymentMethod === 'CARD') {
       if (!cardName || !cardNumber || !expiry || !cvv) {
-        Alert.alert("Champs requis", "Veuillez remplir toutes les informations de paiement par carte.");
+        if (Platform.OS === 'web') {
+          alert("Champs requis : Veuillez remplir toutes les informations de paiement par carte.");
+        } else {
+          Alert.alert("Champs requis", "Veuillez remplir toutes les informations de paiement par carte.");
+        }
         return;
       }
       if (cardNumber.replace(/\s/g, '').length < 16) {
-        Alert.alert("Carte invalide", "Le numéro de carte doit contenir 16 chiffres.");
+        if (Platform.OS === 'web') {
+          alert("Carte invalide : Le numéro de carte doit contenir 16 chiffres.");
+        } else {
+          Alert.alert("Carte invalide", "Le numéro de carte doit contenir 16 chiffres.");
+        }
         return;
       }
     } else {
       if (!phoneNumber || !otpCode) {
-        Alert.alert("Champs requis", "Veuillez saisir votre numéro de téléphone et le code de validation (OTP).");
+        if (Platform.OS === 'web') {
+          alert("Champs requis : Veuillez saisir votre numéro de téléphone et le code de validation (OTP).");
+        } else {
+          Alert.alert("Champs requis", "Veuillez saisir votre numéro de téléphone et le code de validation (OTP).");
+        }
         return;
       }
       if (phoneNumber.replace(/\s/g, '').length < 8) {
-        Alert.alert("Numéro invalide", "Le numéro de téléphone doit contenir au moins 8 chiffres.");
+        if (Platform.OS === 'web') {
+          alert("Numéro invalide : Le numéro de téléphone doit contenir au moins 8 chiffres.");
+        } else {
+          Alert.alert("Numéro invalide", "Le numéro de téléphone doit contenir au moins 8 chiffres.");
+        }
         return;
       }
     }
@@ -108,14 +124,23 @@ export default function ConsumerCart() {
       setOtpCode('');
 
       const payMethodLabel = paymentMethod === 'CARD' ? "carte bancaire" : paymentMethod.replace('_', ' ');
-      Alert.alert(
-        "Paiement réussi !",
-        `Vos achats ont été validés et réglés avec succès via ${payMethodLabel}. Les agriculteurs en sont notifiés !`,
-        [{ text: "Super !", onPress: () => router.push('/(consumer)/orders') }]
-      );
+      if (Platform.OS === 'web') {
+        alert(`Paiement réussi !\n\nVos achats ont été validés et réglés avec succès via ${payMethodLabel}. Les agriculteurs en sont notifiés !`);
+        router.push('/(consumer)/orders');
+      } else {
+        Alert.alert(
+          "Paiement réussi !",
+          `Vos achats ont été validés et réglés avec succès via ${payMethodLabel}. Les agriculteurs en sont notifiés !`,
+          [{ text: "Super !", onPress: () => router.push('/(consumer)/orders') }]
+        );
+      }
 
     } catch (error: any) {
-      Alert.alert("Erreur de paiement", error.message || "Impossible de finaliser la transaction.");
+      if (Platform.OS === 'web') {
+        alert("Erreur de paiement : " + (error.message || "Impossible de finaliser la transaction."));
+      } else {
+        Alert.alert("Erreur de paiement", error.message || "Impossible de finaliser la transaction.");
+      }
     } finally {
       setSubmitting(false);
     }
