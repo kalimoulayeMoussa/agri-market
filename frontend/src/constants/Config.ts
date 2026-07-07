@@ -1,5 +1,5 @@
 // Configuration globale de l'application
-export const API_URL = 'http://192.168.85.215:8080/api';
+export const API_URL = 'http://192.168.11.108:8080/api';
 
 // Catalogue structuré des produits agricoles
 export const PRODUCT_CATALOG: { [key: string]: string[] } = {
